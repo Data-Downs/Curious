@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { nanoid } from "nanoid";
 
 interface Message {
@@ -14,12 +14,18 @@ export function useConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [conversationId] = useState(() => nanoid());
   const [isFirstQuestion, setIsFirstQuestion] = useState(true);
+  const hasStartedRef = useRef(false);
 
   // Fetch the first question when the conversation starts
   const startConversation = useCallback(async () => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
     setIsStreaming(true);
+    setIsLoading(true);
     setCurrentQuestion("");
 
     try {
@@ -55,6 +61,7 @@ export function useConversation() {
               if (data.text) {
                 question += data.text;
                 setCurrentQuestion(question);
+                setIsLoading(false);
               }
             } catch {
               // Skip malformed JSON
@@ -69,6 +76,7 @@ export function useConversation() {
       setIsFirstQuestion(false);
     } finally {
       setIsStreaming(false);
+      setIsLoading(false);
     }
   }, [conversationId]);
 
@@ -156,6 +164,7 @@ export function useConversation() {
     messages,
     currentQuestion,
     isStreaming,
+    isLoading,
     isFirstQuestion,
     conversationId,
     startConversation,

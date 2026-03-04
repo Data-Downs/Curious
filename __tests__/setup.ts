@@ -1,2 +1,11 @@
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 import "fake-indexeddb/auto";
+
+afterEach(() => {
+  cleanup();
+});
+
+// jsdom doesn't implement scrollIntoView
+Element.prototype.scrollIntoView = () => {};

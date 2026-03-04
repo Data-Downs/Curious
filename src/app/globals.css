@@ -29,6 +29,39 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes gentlePulse {
+  0%, 100% { opacity: 0.6; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.1); }
+}
+
+@utility animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@utility animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@utility animate-gentle-pulse {
+  animation: gentlePulse 2.5s ease-in-out infinite;
+}
+
 /* Mobile-first: ensure no zoom on input focus */
 input,
 textarea,

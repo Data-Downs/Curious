@@ -13,7 +13,7 @@ export function InputBar({ onSubmit, disabled }: InputBarProps) {
   }
 
   return (
-    <div className="border-t border-curious-100 bg-curious-50 px-4 py-3 safe-area-pb">
+    <div className="px-4 pt-2 pb-4 md:px-8 md:pb-6 safe-area-pb">
       <TextInput onSubmit={handleTextSubmit} disabled={disabled} />
       {/* Voice, photo, and URL inputs will be added in Phase 2 */}
     </div>

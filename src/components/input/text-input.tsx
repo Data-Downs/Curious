@@ -36,6 +36,8 @@ export function TextInput({ onSubmit, disabled, placeholder }: TextInputProps) {
     }
   }
 
+  const canSend = !disabled && text.trim().length > 0;
+
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2">
       <textarea
@@ -43,15 +45,19 @@ export function TextInput({ onSubmit, disabled, placeholder }: TextInputProps) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder ?? "Share your thoughts..."}
+        placeholder={placeholder ?? "What comes to mind..."}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-2xl border border-curious-200 bg-white px-4 py-3 text-curious-900 placeholder:text-curious-400 focus:border-curious-500 focus:outline-none focus:ring-1 focus:ring-curious-500 disabled:opacity-50"
+        className="flex-1 resize-none rounded-2xl border border-curious-200/50 bg-white/50 px-4 py-3 font-serif text-curious-900 placeholder:text-curious-400 placeholder:italic focus:border-curious-300 focus:bg-white/80 focus:outline-none disabled:opacity-50 transition-all duration-300"
       />
       <button
         type="submit"
-        disabled={disabled || !text.trim()}
-        className="rounded-full bg-curious-800 p-3 text-white transition-colors hover:bg-curious-700 disabled:opacity-30 disabled:hover:bg-curious-800"
+        disabled={!canSend}
+        className={`rounded-full bg-curious-800 p-3 text-white transition-all duration-300 ${
+          canSend
+            ? "opacity-100 scale-100 hover:bg-curious-700 hover:scale-105"
+            : "opacity-0 scale-90"
+        }`}
         aria-label="Send"
       >
         <svg
@@ -60,7 +66,7 @@ export function TextInput({ onSubmit, disabled, placeholder }: TextInputProps) {
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
         >

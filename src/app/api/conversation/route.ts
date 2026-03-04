@@ -81,6 +81,7 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (err) {
+        console.error("[conversation stream error]", err);
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({ error: "Stream error" })}\n\n`

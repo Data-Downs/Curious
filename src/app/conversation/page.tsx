@@ -10,6 +10,7 @@ export default function ConversationPage() {
     messages,
     currentQuestion,
     isStreaming,
+    isLoading,
     isFirstQuestion,
     startConversation,
     sendMessage,
@@ -23,12 +24,13 @@ export default function ConversationPage() {
   }, [isFirstQuestion, startConversation]);
 
   return (
-    <div className="flex flex-col h-dvh bg-curious-50">
+    <div className="flex flex-col h-dvh bg-curious-50 overflow-hidden">
       {/* Conversation area */}
       <ConversationView
         messages={messages}
         currentQuestion={currentQuestion}
         isStreaming={isStreaming}
+        isLoading={isLoading}
       />
 
       {/* Input area */}
