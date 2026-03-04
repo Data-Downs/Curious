@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { nanoid } from "nanoid";
+import { db } from "@/lib/db";
 
 interface Message {
   id: string;
@@ -18,11 +19,75 @@ export function useConversation() {
   const [conversationId] = useState(() => nanoid());
   const [isFirstQuestion, setIsFirstQuestion] = useState(true);
   const hasStartedRef = useRef(false);
+  const startedAtRef = useRef(new Date().toISOString());
+  const extractingRef = useRef(false);
 
-  // Fetch the first question when the conversation starts
+  // Save a message to IndexedDB
+  const saveMessageLocally = useCallback(
+    async (msg: Message) => {
+      try {
+        await db.messages.put({
+          id: msg.id,
+          conversationId,
+          role: msg.role,
+          content: msg.content,
+          inputType: msg.inputType,
+          timestamp: new Date(),
+        });
+        const existing = await db.conversations.get(conversationId);
+        if (existing) {
+          await db.conversations.update(conversationId, {
+            lastMessageAt: new Date(),
+            messageCount: existing.messageCount + 1,
+          });
+        } else {
+          await db.conversations.put({
+            id: conversationId,
+            startedAt: new Date(),
+            lastMessageAt: new Date(),
+            messageCount: 1,
+          });
+        }
+      } catch {
+        // IndexedDB errors shouldn't break the conversation
+      }
+    },
+    [conversationId]
+  );
+
+  // Background understanding extraction — fire and forget
+  const extractInBackground = useCallback(
+    (allMessages: Message[]) => {
+      if (extractingRef.current || allMessages.length < 4) return;
+      extractingRef.current = true;
+
+      const transcript = allMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      fetch("/api/understanding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationId,
+          messages: transcript,
+          startedAt: startedAtRef.current,
+        }),
+      })
+        .catch(() => {})
+        .finally(() => {
+          extractingRef.current = false;
+        });
+    },
+    [conversationId]
+  );
+
+  // Fetch the first question
   const startConversation = useCallback(async () => {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
+    startedAtRef.current = new Date().toISOString();
 
     setIsStreaming(true);
     setIsLoading(true);
@@ -33,7 +98,7 @@ export function useConversation() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: "[First interaction — ask an opening question]",
+          message: "[Returning to continue our conversation — ask a question that builds on what you already know about me]",
           inputType: "text",
           conversationId,
         }),
@@ -71,7 +136,7 @@ export function useConversation() {
       }
 
       setIsFirstQuestion(false);
-    } catch (err) {
+    } catch {
       setCurrentQuestion("What's on your mind today?");
       setIsFirstQuestion(false);
     } finally {
@@ -83,7 +148,6 @@ export function useConversation() {
   // Send a message and get the next question
   const sendMessage = useCallback(
     async (text: string, inputType: "text" | "voice" | "photo" | "url") => {
-      // Add the user's message to the conversation
       const userMessage: Message = {
         id: nanoid(),
         role: "user",
@@ -91,7 +155,6 @@ export function useConversation() {
         inputType,
       };
 
-      // Move current question to messages as an agent message
       const agentMessage: Message = {
         id: nanoid(),
         role: "agent",
@@ -104,8 +167,14 @@ export function useConversation() {
       setCurrentQuestion("");
       setIsStreaming(true);
 
+      // Save to IndexedDB
+      saveMessageLocally(agentMessage);
+      saveMessageLocally(userMessage);
+
+      // Extract understanding in background (fire and forget)
+      extractInBackground(updatedMessages);
+
       try {
-        // Send recent messages for context (last 10 exchanges)
         const recentMessages = updatedMessages.slice(-20).map((m) => ({
           role: m.role,
           content: m.content,
@@ -151,13 +220,13 @@ export function useConversation() {
             }
           }
         }
-      } catch (err) {
+      } catch {
         setCurrentQuestion("Tell me more about that...");
       } finally {
         setIsStreaming(false);
       }
     },
-    [messages, currentQuestion, conversationId]
+    [messages, currentQuestion, conversationId, saveMessageLocally, extractInBackground]
   );
 
   return {

@@ -2,9 +2,9 @@ import { getAnthropicClient, MODEL } from "@/lib/anthropic";
 import { buildQuestionerPrompt } from "@/lib/prompts/questioner";
 import { conversationRequestSchema } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { suggestExplorationPriority } from "@/lib/domain-coverage";
 
 export async function POST(request: Request) {
-  // Authenticate
   const supabase = await createClient();
   const {
     data: { user },
@@ -14,7 +14,6 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Validate input
   const body = await request.json();
   const parsed = conversationRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -26,18 +25,52 @@ export async function POST(request: Request) {
 
   const { message, inputType, mediaDescription, recentMessages } = parsed.data;
 
-  // Fetch user's understanding facets from Supabase
-  const { data: facets } = await supabase
-    .from("understanding_facets")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .order("confidence", { ascending: false });
+  // Fetch understanding facets, recent sessions, profile, and curiosity threads in parallel
+  const [facetsResult, sessionsResult, profileResult, threadsResult] =
+    await Promise.all([
+      supabase
+        .from("understanding_facets")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("confidence", { ascending: false }),
+      supabase
+        .from("conversation_sessions")
+        .select("themes")
+        .eq("user_id", user.id)
+        .order("ended_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("profiles")
+        .select("total_conversations")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("curiosity_threads")
+        .select("thread")
+        .eq("user_id", user.id)
+        .eq("explored", false)
+        .limit(5),
+    ]);
 
-  // Build conversation context for the prompt
+  const facets = facetsResult.data ?? [];
+
+  // Compute domain coverage
+  const domainCoverage = suggestExplorationPriority(facets);
+
+  // Gather recent themes from last 5 sessions
+  const recentThemes = (sessionsResult.data ?? [])
+    .flatMap((s) => s.themes ?? [])
+    .slice(0, 10);
+
+  const conversationCount = profileResult.data?.total_conversations ?? 0;
+
+  // Gather unexplored curiosity threads
+  const curiosityThreads = (threadsResult.data ?? []).map((t) => t.thread);
+
+  // Build conversation context
   const messages: { role: string; content: string }[] = recentMessages ?? [];
 
-  // Add the current message
   let userContent = message;
   if (inputType === "voice") {
     userContent = `[Voice message, transcribed]: ${message}`;
@@ -48,13 +81,15 @@ export async function POST(request: Request) {
   }
   messages.push({ role: "user", content: userContent });
 
-  // Build the system prompt
   const systemPrompt = buildQuestionerPrompt({
-    facets: facets ?? [],
+    facets,
+    curiosityThreads,
     recentMessages: messages,
+    domainCoverage,
+    recentThemes,
+    conversationCount,
   });
 
-  // Stream response from Claude
   const anthropic = getAnthropicClient();
   const stream = await anthropic.messages.stream({
     model: MODEL,
@@ -63,7 +98,6 @@ export async function POST(request: Request) {
     messages: [{ role: "user", content: userContent }],
   });
 
-  // Convert to SSE stream
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
@@ -74,7 +108,9 @@ export async function POST(request: Request) {
             event.delta.type === "text_delta"
           ) {
             controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+              encoder.encode(
+                `data: ${JSON.stringify({ text: event.delta.text })}\n\n`
+              )
             );
           }
         }

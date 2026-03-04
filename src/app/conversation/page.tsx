@@ -16,7 +16,6 @@ export default function ConversationPage() {
     sendMessage,
   } = useConversation();
 
-  // Start the conversation by asking the first question
   useEffect(() => {
     if (isFirstQuestion) {
       startConversation();
@@ -24,8 +23,7 @@ export default function ConversationPage() {
   }, [isFirstQuestion, startConversation]);
 
   return (
-    <div className="flex flex-col h-dvh bg-curious-50 overflow-hidden">
-      {/* Conversation area */}
+    <div className="flex flex-col h-dvh bg-curious-50 overflow-hidden pb-14">
       <ConversationView
         messages={messages}
         currentQuestion={currentQuestion}
@@ -33,7 +31,6 @@ export default function ConversationPage() {
         isLoading={isLoading}
       />
 
-      {/* Input area */}
       <InputBar
         onSubmit={sendMessage}
         disabled={isStreaming || !currentQuestion}
