@@ -1,14 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
-
-let client: Anthropic | null = null;
+import { getEnv } from "@/lib/env";
 
 export function getAnthropicClient(): Anthropic {
-  if (!client) {
-    client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-  }
-  return client;
+  return new Anthropic({
+    apiKey: getEnv("ANTHROPIC_API_KEY"),
+  });
+}
+
+export function getAnthropicApiKey(): string | undefined {
+  return getEnv("ANTHROPIC_API_KEY");
 }
 
 export const MODEL = "claude-sonnet-4-20250514";

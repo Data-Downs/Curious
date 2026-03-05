@@ -14,6 +14,7 @@ interface Message {
 interface ConversationViewProps {
   messages: Message[];
   currentQuestion: string;
+  currentReflection?: string;
   isStreaming: boolean;
   isLoading: boolean;
 }
@@ -21,6 +22,7 @@ interface ConversationViewProps {
 export function ConversationView({
   messages,
   currentQuestion,
+  currentReflection,
   isStreaming,
   isLoading,
 }: ConversationViewProps) {
@@ -54,7 +56,7 @@ export function ConversationView({
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <QuestionDisplay key="q-first" question={currentQuestion} isStreaming={isStreaming} />
+        <QuestionDisplay key="q-first" question={currentQuestion} reflection={currentReflection} isStreaming={isStreaming} />
       </div>
     );
   }
@@ -94,7 +96,7 @@ export function ConversationView({
             </p>
           </div>
         ) : currentQuestion ? (
-          <QuestionDisplay key={`q-${messages.length}`} question={currentQuestion} isStreaming={isStreaming} />
+          <QuestionDisplay key={`q-${messages.length}`} question={currentQuestion} reflection={currentReflection} isStreaming={isStreaming} />
         ) : null}
       </div>
     </div>

@@ -32,17 +32,24 @@ export function BridgeQuery({ connectionId }: BridgeQueryProps) {
         body: JSON.stringify({ connectionId, query: query.trim() }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        setError(data.error ?? "Failed to query");
+        const text = await response.text();
+        let msg = `Error ${response.status}`;
+        try {
+          const data = JSON.parse(text);
+          msg = data.error ?? msg;
+        } catch {
+          msg = text || msg;
+        }
+        setError(msg);
         return;
       }
 
+      const data = await response.json();
       setResult(data);
       setQuery("");
-    } catch {
-      setError("Something went wrong");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsQuerying(false);
     }

@@ -14,6 +14,7 @@ interface Message {
 export function useConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
+  const [currentReflection, setCurrentReflection] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId] = useState(() => nanoid());
@@ -21,6 +22,19 @@ export function useConversation() {
   const hasStartedRef = useRef(false);
   const startedAtRef = useRef(new Date().toISOString());
   const extractingRef = useRef(false);
+
+  // Parse SSE data events, handling both typed and legacy formats
+  const parseSSEData = (data: { type?: string; text?: string }) => {
+    if (data.type === "reflection") {
+      setCurrentReflection(data.text ?? "");
+    } else if (data.type === "question") {
+      // For question events, append text (streaming) or set full text (buffered reflection turn)
+      setCurrentQuestion((prev) => prev + (data.text ?? ""));
+    } else if (data.text) {
+      // Legacy format without type — treat as question
+      setCurrentQuestion((prev) => prev + data.text);
+    }
+  };
 
   // Save a message to IndexedDB
   const saveMessageLocally = useCallback(
@@ -83,6 +97,38 @@ export function useConversation() {
     [conversationId]
   );
 
+  // Process an SSE stream response
+  const processStream = useCallback(
+    async (response: Response) => {
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ") && line !== "data: [DONE]") {
+            try {
+              const data = JSON.parse(line.slice(6));
+              parseSSEData(data);
+              setIsLoading(false);
+            } catch {
+              // Skip malformed JSON
+            }
+          }
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   // Fetch the first question
   const startConversation = useCallback(async () => {
     if (hasStartedRef.current) return;
@@ -92,6 +138,7 @@ export function useConversation() {
     setIsStreaming(true);
     setIsLoading(true);
     setCurrentQuestion("");
+    setCurrentReflection("");
 
     try {
       const response = await fetch("/api/conversation", {
@@ -106,34 +153,7 @@ export function useConversation() {
 
       if (!response.ok) throw new Error("Failed to start conversation");
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body");
-
-      const decoder = new TextDecoder();
-      let question = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ") && line !== "data: [DONE]") {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.text) {
-                question += data.text;
-                setCurrentQuestion(question);
-                setIsLoading(false);
-              }
-            } catch {
-              // Skip malformed JSON
-            }
-          }
-        }
-      }
+      await processStream(response);
 
       setIsFirstQuestion(false);
     } catch {
@@ -143,7 +163,7 @@ export function useConversation() {
       setIsStreaming(false);
       setIsLoading(false);
     }
-  }, [conversationId]);
+  }, [conversationId, processStream]);
 
   // Send a message and get the next question
   const sendMessage = useCallback(
@@ -165,6 +185,7 @@ export function useConversation() {
       const updatedMessages = [...messages, agentMessage, userMessage];
       setMessages(updatedMessages);
       setCurrentQuestion("");
+      setCurrentReflection("");
       setIsStreaming(true);
 
       // Save to IndexedDB
@@ -193,45 +214,20 @@ export function useConversation() {
 
         if (!response.ok) throw new Error("Failed to send message");
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
-
-        const decoder = new TextDecoder();
-        let question = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ") && line !== "data: [DONE]") {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.text) {
-                  question += data.text;
-                  setCurrentQuestion(question);
-                }
-              } catch {
-                // Skip malformed JSON
-              }
-            }
-          }
-        }
+        await processStream(response);
       } catch {
         setCurrentQuestion("Tell me more about that...");
       } finally {
         setIsStreaming(false);
       }
     },
-    [messages, currentQuestion, conversationId, saveMessageLocally, extractInBackground]
+    [messages, currentQuestion, conversationId, saveMessageLocally, extractInBackground, processStream]
   );
 
   return {
     messages,
     currentQuestion,
+    currentReflection,
     isStreaming,
     isLoading,
     isFirstQuestion,

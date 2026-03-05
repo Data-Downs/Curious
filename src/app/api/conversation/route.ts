@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL } from "@/lib/anthropic";
+import { MODEL, getAnthropicApiKey } from "@/lib/anthropic";
 import { buildQuestionerPrompt } from "@/lib/prompts/questioner";
 import { conversationRequestSchema } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
@@ -81,6 +81,10 @@ export async function POST(request: Request) {
   }
   messages.push({ role: "user", content: userContent });
 
+  // Determine if this is a reflection turn (every 3rd exchange)
+  const userMessageCount = messages.filter((m) => m.role === "user").length;
+  const isReflectionTurn = userMessageCount > 0 && userMessageCount % 3 === 0;
+
   const systemPrompt = buildQuestionerPrompt({
     facets,
     curiosityThreads,
@@ -88,30 +92,120 @@ export async function POST(request: Request) {
     domainCoverage,
     recentThemes,
     conversationCount,
+    isReflectionTurn,
   });
 
-  const anthropic = getAnthropicClient();
-  const stream = await anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: 300,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userContent }],
+  const apiKey = getAnthropicApiKey();
+  if (!apiKey) {
+    return Response.json({ error: "Missing API key" }, { status: 500 });
+  }
+
+  // Use direct fetch to Anthropic API — the SDK's stream iterator
+  // doesn't work in Cloudflare Workers
+  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: isReflectionTurn ? 500 : 300,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }],
+      stream: true,
+    }),
   });
+
+  if (!anthropicResponse.ok || !anthropicResponse.body) {
+    const errText = await anthropicResponse.text().catch(() => "unknown");
+    console.error("[anthropic error]", anthropicResponse.status, errText);
+    return Response.json({ error: "LLM request failed" }, { status: 502 });
+  }
 
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const anthropicReader = anthropicResponse.body.getReader();
+
+  if (isReflectionTurn) {
+    // Buffer the full response to split on ---
+    let fullText = "";
+    let sseBuffer = "";
+
+    while (true) {
+      const { done, value } = await anthropicReader.read();
+      if (done) break;
+      sseBuffer += decoder.decode(value, { stream: true });
+
+      const lines = sseBuffer.split("\n");
+      sseBuffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ") && line !== "data: [DONE]") {
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+              fullText += evt.delta.text;
+            }
+          } catch {
+            // skip
+          }
+        }
+      }
+    }
+
+    // Split on --- delimiter (flexible matching)
+    const delimiterMatch = fullText.match(/\n\s*---+\s*\n/);
+    const responseEvents: string[] = [];
+
+    if (delimiterMatch && delimiterMatch.index !== undefined) {
+      const reflection = fullText.slice(0, delimiterMatch.index).trim();
+      const question = fullText.slice(delimiterMatch.index + delimiterMatch[0].length).trim();
+      responseEvents.push(`data: ${JSON.stringify({ type: "reflection", text: reflection })}\n\n`);
+      responseEvents.push(`data: ${JSON.stringify({ type: "question", text: question })}\n\n`);
+    } else {
+      responseEvents.push(`data: ${JSON.stringify({ type: "question", text: fullText.trim() })}\n\n`);
+    }
+    responseEvents.push("data: [DONE]\n\n");
+
+    return new Response(responseEvents.join(""), {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  }
+
+  // Non-reflection turn: stream through
   const readable = new ReadableStream({
     async start(controller) {
+      let sseBuffer = "";
       try {
-        for await (const event of stream) {
-          if (
-            event.type === "content_block_delta" &&
-            event.delta.type === "text_delta"
-          ) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ text: event.delta.text })}\n\n`
-              )
-            );
+        while (true) {
+          const { done, value } = await anthropicReader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+
+          const lines = sseBuffer.split("\n");
+          sseBuffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ") && line !== "data: [DONE]") {
+              try {
+                const evt = JSON.parse(line.slice(6));
+                if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ type: "question", text: evt.delta.text })}\n\n`
+                    )
+                  );
+                }
+              } catch {
+                // skip malformed JSON
+              }
+            }
           }
         }
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));

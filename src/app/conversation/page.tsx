@@ -9,6 +9,7 @@ export default function ConversationPage() {
   const {
     messages,
     currentQuestion,
+    currentReflection,
     isStreaming,
     isLoading,
     isFirstQuestion,
@@ -27,6 +28,7 @@ export default function ConversationPage() {
       <ConversationView
         messages={messages}
         currentQuestion={currentQuestion}
+        currentReflection={currentReflection}
         isStreaming={isStreaming}
         isLoading={isLoading}
       />
