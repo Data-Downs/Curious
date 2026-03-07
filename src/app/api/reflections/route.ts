@@ -98,10 +98,16 @@ export async function POST(request: Request) {
 
   let reflection;
   try {
-    const jsonStr = responseText.replace(/```json\n?|\n?```/g, "").trim();
+    // Strip markdown code fences if present
+    let jsonStr = responseText.replace(/```json\n?|\n?```/g, "").trim();
+    // Extract JSON object if there's preamble text before it
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    }
     reflection = reflectionResponseSchema.parse(JSON.parse(jsonStr));
   } catch (err) {
-    console.error("[reflection parse error]", err, responseText);
+    console.error("[reflection parse error]", err, "Raw response:", responseText);
     return Response.json(
       { error: "Failed to generate reflection" },
       { status: 500 }

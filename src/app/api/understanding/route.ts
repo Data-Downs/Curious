@@ -94,11 +94,15 @@ export async function POST(request: Request) {
 
   let extraction;
   try {
-    // Try to parse JSON — handle markdown code fences if present
-    const jsonStr = responseText.replace(/```json\n?|\n?```/g, "").trim();
+    let jsonStr = responseText.replace(/```json\n?|\n?```/g, "").trim();
+    // Extract JSON object if there's preamble text before it
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    }
     extraction = extractionSchema.parse(JSON.parse(jsonStr));
   } catch (err) {
-    console.error("[understanding parse error]", err, responseText);
+    console.error("[understanding parse error]", err, "Raw response:", responseText);
     return Response.json(
       { error: "Failed to parse understanding extraction" },
       { status: 500 }
