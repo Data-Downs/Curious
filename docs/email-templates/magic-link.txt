@@ -1,0 +1,9 @@
+Curious
+Someone wants to continue a conversation.
+Tap the button below to sign in. No password needed — this link will take you straight back to where your agent is waiting.
+Sign in to Curious
+
+If the button doesn’t work, paste this link into your browser:
+{{ .ConfirmationURL }}
+An agent that wants to understand you.
+You received this because someone signed in with {{ .Email }}

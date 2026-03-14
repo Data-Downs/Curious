@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const tabs = [
   { href: "/conversation", label: "Converse", icon: ConversationIcon },
@@ -13,30 +14,35 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Hide nav on auth pages
-  if (pathname?.startsWith("/auth")) return null;
+  // Hide nav on auth pages and homepage
+  if (pathname?.startsWith("/auth") || pathname === "/") return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-curious-100 safe-area-pb z-50">
-      <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
-        {tabs.map((tab) => {
-          const isActive =
-            pathname === tab.href || pathname?.startsWith(tab.href + "/");
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1 transition-colors ${
-                isActive ? "text-curious-800" : "text-curious-400"
-              }`}
-            >
-              <tab.icon active={isActive} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
-            </Link>
-          );
-        })}
+    <>
+      <div className="fixed top-0 right-0 z-50 p-4">
+        <SignOutButton />
       </div>
-    </nav>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-curious-100 safe-area-pb z-50">
+        <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
+          {tabs.map((tab) => {
+            const isActive =
+              pathname === tab.href || pathname?.startsWith(tab.href + "/");
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`flex flex-col items-center gap-0.5 px-4 py-1 transition-colors ${
+                  isActive ? "text-curious-800" : "text-curious-400"
+                }`}
+              >
+                <tab.icon active={isActive} />
+                <span className="text-[10px] font-medium">{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }
 
