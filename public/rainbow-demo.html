@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rainbow Text Gradient Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      padding: 3rem 2rem;
+    }
+
+    .rainbow {
+      background: linear-gradient(to right, #f9ce34, #ee7752, #e73c7e, #ba54f5, #7049f0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      line-height: 1.1;
+      display: inline-block;
+    }
+
+    .sample {
+      margin-bottom: 2.5rem;
+    }
+
+    .label {
+      font-size: 0.75rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.25rem;
+      font-weight: 400;
+    }
+
+    /* Dark on light section */
+    .light-section {
+      background: #fff;
+      margin: 3rem -2rem;
+      padding: 3rem 2rem;
+    }
+
+    .light-section .label { color: #aaa; }
+
+    .rainbow-on-light {
+      background: linear-gradient(to right, #d4880f, #c84a28, #b81e5b, #8c2dc0, #4a24c7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      line-height: 1.1;
+      display: inline-block;
+    }
+
+    /* Animated version */
+    .rainbow-animated {
+      background: linear-gradient(
+        270deg,
+        #f9ce34, #ee7752, #e73c7e, #ba54f5, #7049f0,
+        #f9ce34, #ee7752, #e73c7e
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      line-height: 1.1;
+      display: inline-block;
+      animation: shimmer 4s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* Variations section */
+    .variation-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .variation-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .sunset {
+      background: linear-gradient(to right, #ff6b35, #f7c948, #ff6b35);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .ocean {
+      background: linear-gradient(to right, #36d1dc, #5b86e5, #36d1dc);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .forest {
+      background: linear-gradient(to right, #11998e, #38ef7d, #11998e);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .rose {
+      background: linear-gradient(to right, #ee9ca7, #ffdde1, #ee9ca7);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #222;
+      margin: 3rem 0;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="section-title">Scale — dark background</p>
+
+  <div class="sample">
+    <p class="label">12px</p>
+    <span class="rainbow" style="font-size: 12px;">The opposite of social media</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">16px — Body</p>
+    <span class="rainbow" style="font-size: 16px;">The opposite of social media</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">24px — Large</p>
+    <span class="rainbow" style="font-size: 24px;">The opposite of social media</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">32px — Heading 3</p>
+    <span class="rainbow" style="font-size: 32px;">The opposite of social media</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">48px — Heading 2</p>
+    <span class="rainbow" style="font-size: 48px;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">72px — Heading 1</p>
+    <span class="rainbow" style="font-size: 72px;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">96px — Display</p>
+    <span class="rainbow" style="font-size: 96px;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">128px — Hero</p>
+    <span class="rainbow" style="font-size: 128px;">Curious</span>
+  </div>
+
+  <hr class="divider">
+
+  <div class="light-section">
+    <p class="section-title">Scale — light background</p>
+
+    <div class="sample">
+      <p class="label">32px</p>
+      <span class="rainbow-on-light" style="font-size: 32px;">The opposite of social media</span>
+    </div>
+
+    <div class="sample">
+      <p class="label">48px</p>
+      <span class="rainbow-on-light" style="font-size: 48px;">Curious</span>
+    </div>
+
+    <div class="sample">
+      <p class="label">72px</p>
+      <span class="rainbow-on-light" style="font-size: 72px;">Curious</span>
+    </div>
+
+    <div class="sample">
+      <p class="label">96px</p>
+      <span class="rainbow-on-light" style="font-size: 96px;">Curious</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-title">Animated shimmer</p>
+
+  <div class="sample">
+    <p class="label">48px — Slow sweep</p>
+    <span class="rainbow-animated" style="font-size: 48px;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">72px — Slow sweep</p>
+    <span class="rainbow-animated" style="font-size: 72px;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">96px — Slow sweep</p>
+    <span class="rainbow-animated" style="font-size: 96px;">Curious</span>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-title">Palette variations</p>
+
+  <div class="variation-grid">
+    <div class="sample">
+      <p class="label">Sunset</p>
+      <span class="sunset" style="font-size: 48px; font-weight: 700; display: inline-block; line-height: 1.1;">Curious</span>
+    </div>
+    <div class="sample">
+      <p class="label">Ocean</p>
+      <span class="ocean" style="font-size: 48px; font-weight: 700; display: inline-block; line-height: 1.1;">Curious</span>
+    </div>
+    <div class="sample">
+      <p class="label">Forest</p>
+      <span class="forest" style="font-size: 48px; font-weight: 700; display: inline-block; line-height: 1.1;">Curious</span>
+    </div>
+    <div class="sample">
+      <p class="label">Rose</p>
+      <span class="rose" style="font-size: 48px; font-weight: 700; display: inline-block; line-height: 1.1;">Curious</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-title">Font weight comparison — 72px</p>
+
+  <div class="sample">
+    <p class="label">Weight 400 (Regular)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 400;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">Weight 500 (Medium)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 500;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">Weight 600 (Semibold)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 600;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">Weight 700 (Bold)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 700;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">Weight 800 (Extra Bold)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 800;">Curious</span>
+  </div>
+
+  <div class="sample">
+    <p class="label">Weight 900 (Black)</p>
+    <span class="rainbow" style="font-size: 72px; font-weight: 900;">Curious</span>
+  </div>
+
+</body>
+</html>
