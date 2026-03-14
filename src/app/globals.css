@@ -62,6 +62,21 @@ body {
   animation: gentlePulse 2.5s ease-in-out infinite;
 }
 
+@utility text-rainbow {
+  background: linear-gradient(
+    to right,
+    #f9a825,
+    #ef6c00,
+    #e91e63,
+    #9c27b0,
+    #5c6bc0
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 /* Mobile-first: ensure no zoom on input focus */
 input,
 textarea,

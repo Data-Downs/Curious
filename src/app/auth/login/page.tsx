@@ -46,7 +46,7 @@ function LoginForm() {
       ) : (
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="text-center">
-            <h1 className="text-2xl font-serif text-curious-900">Curious</h1>
+            <h1 className="text-2xl font-serif text-rainbow">Curious</h1>
             <p className="mt-2 text-sm text-curious-600">
               Enter your email to begin.
             </p>
