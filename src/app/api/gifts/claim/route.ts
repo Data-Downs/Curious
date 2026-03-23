@@ -11,6 +11,7 @@ const seederResponseSchema = z.object({
   threads: z.array(
     z.object({
       domain: z.string(),
+      layer: z.string().default("origin"),
       thread: z.string(),
     })
   ),
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
       await supabase.from("curiosity_threads").insert({
         user_id: user.id,
         domain: thread.domain,
+        layer: thread.layer,
         thread: thread.thread,
         explored: false,
         source_gift_id: gift.id,

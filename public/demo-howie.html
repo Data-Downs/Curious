@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curious — Howie's Conversation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e8e4df;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 em { color: #c4b5fd; font-style: italic; }
+  .hero .subtitle {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: #9a948c;
+    max-width: 580px;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+
+  /* GIFT BRIEF */
+  .brief-section {
+    max-width: 680px;
+    margin: 0 auto 3rem;
+    padding: 0 2rem;
+  }
+  .brief-card {
+    background: rgba(139,92,246,0.04);
+    border: 1px solid rgba(139,92,246,0.15);
+    border-radius: 16px;
+    padding: 2rem;
+  }
+  .brief-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a78bfa;
+    margin-bottom: 0.5rem;
+  }
+  .brief-from {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: #c4b5fd;
+    margin-bottom: 1rem;
+  }
+  .brief-text {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: #9a948c;
+    line-height: 1.8;
+    font-style: italic;
+  }
+
+  /* THREAD PILLS */
+  .threads-section {
+    max-width: 680px;
+    margin: 0 auto 4rem;
+    padding: 0 2rem;
+  }
+  .threads-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6d6560;
+    margin-bottom: 1rem;
+  }
+  .threads-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .thread-pill {
+    font-size: 0.75rem;
+    font-weight: 400;
+    padding: 0.4rem 0.8rem;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #9a948c;
+  }
+  .thread-pill .layer-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .dot-origin { background: #f472b6; }
+  .dot-calling { background: #fb923c; }
+  .dot-naming { background: #facc15; }
+  .dot-embodiment { background: #4ade80; }
+  .dot-fracture { background: #38bdf8; }
+  .dot-bridge { background: #8b5cf6; }
+  .dot-expanse { background: #c084fc; }
+  .dot-return { background: #e879a8; }
+
+  /* CONVERSATION */
+  .conversation {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+  }
+
+  .exchange {
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .exchange.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Layer marker */
+  .layer-marker {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 3rem 0 1.5rem;
+    padding-top: 2rem;
+  }
+  .layer-marker:first-child { margin-top: 0; padding-top: 0; }
+  .layer-marker-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+  .layer-marker-text {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .layer-marker-sub {
+    font-size: 0.6rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: #6d6560;
+    white-space: nowrap;
+  }
+
+  /* Agent question */
+  .agent {
+    margin-bottom: 0.6rem;
+  }
+  .agent-question {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #e8e4df;
+  }
+  .thread-indicator {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 100px;
+    background: rgba(139,92,246,0.12);
+    color: #a78bfa;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  /* Reflection */
+  .reflection {
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: #a78bfa;
+    font-style: italic;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid rgba(139,92,246,0.25);
+    line-height: 1.7;
+  }
+
+  /* Agent note */
+  .agent-note {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #4a4540;
+    margin-bottom: 0.8rem;
+    padding: 0.5rem 0.8rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border-left: 2px solid rgba(255,255,255,0.06);
+    line-height: 1.6;
+  }
+
+  /* User response */
+  .user {
+    margin-bottom: 2.5rem;
+    padding-left: 1.5rem;
+  }
+  .user-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a4540;
+    margin-bottom: 0.3rem;
+  }
+  .user-text {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: #9a948c;
+    line-height: 1.8;
+  }
+
+  /* COLOUR CODING */
+  .c-origin .layer-marker-text { color: #f472b6; }
+  .c-origin .agent-question { color: #f9d4e4; }
+  .c-calling .layer-marker-text { color: #fb923c; }
+  .c-calling .agent-question { color: #fde0c4; }
+  .c-naming .layer-marker-text { color: #facc15; }
+  .c-naming .agent-question { color: #fef3c7; }
+  .c-embodiment .layer-marker-text { color: #4ade80; }
+  .c-embodiment .agent-question { color: #d1fae5; }
+  .c-fracture .layer-marker-text { color: #38bdf8; }
+  .c-fracture .agent-question { color: #cff0ff; }
+  .c-bridge .layer-marker-text { color: #8b5cf6; }
+  .c-bridge .agent-question { color: #ddd6fe; }
+  .c-expanse .layer-marker-text { color: #c084fc; }
+  .c-expanse .agent-question { color: #e9d5ff; }
+  .c-return .layer-marker-text { color: #e879a8; }
+  .c-return .agent-question { color: #fce7f3; }
+
+  /* CLOSING */
+  .closing-section {
+    max-width: 680px;
+    margin: 2rem auto 6rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .closing-section p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    color: #6d6560;
+    line-height: 1.7;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 2rem; }
+    .agent-question { font-size: 1.15rem; }
+    .brief-card { padding: 1.5rem; }
+    .conversation { padding: 0 1.2rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <h1>A Conversation with <em>Howie</em></h1>
+  <p class="subtitle">A simulated conversation showing how the Tippett spiral works with a 17-year-old who gives you four words when you want forty — and how a father's briefing helps the agent know where to dig when the surface gives you nothing.</p>
+</section>
+
+<!-- THE GIFT BRIEF -->
+<div class="brief-section">
+  <div class="brief-card">
+    <div class="brief-label">Gift Briefing</div>
+    <div class="brief-from">From: Dad &middot; Relationship: Father</div>
+    <p class="brief-text">
+      "Howie is 17 — but he's already a remarkable young man. He is beautiful on the inside and out. He works out at the gym and has an incredible physique. But this comes from his phenomenal discipline — which I admire. People love him because he is fun loving and fun making. He is curious about the world and about people — which makes everyone adore him — because he shows a genuine interest in them. He is a systems thinker who loves social geography and economics. And he wants to put all of that to good use. He is strong in every sense and takes responsibility for himself and others. He is deeply caring and kind and loves to help and care for people. He is utterly remarkable and I could not be more proud to be his Dad. I'm optimistic about his future and the future of the world because he is in it."
+    </p>
+  </div>
+</div>
+
+<!-- SEEDED THREADS -->
+<div class="threads-section">
+  <div class="threads-label">Curiosity threads generated from the briefing</div>
+  <div class="threads-grid">
+    <span class="thread-pill"><span class="layer-dot dot-origin"></span>Earliest sense of responsibility — where did it begin?</span>
+    <span class="thread-pill"><span class="layer-dot dot-calling"></span>How systems thinking found him — or he found it</span>
+    <span class="thread-pill"><span class="layer-dot dot-naming"></span>What "strength" means beyond the physical</span>
+    <span class="thread-pill"><span class="layer-dot dot-embodiment"></span>The daily discipline of training — the ritual, the feel of it</span>
+    <span class="thread-pill"><span class="layer-dot dot-fracture"></span>Where caring for others has cost him something</span>
+    <span class="thread-pill"><span class="layer-dot dot-bridge"></span>The thread between gym discipline and intellectual curiosity</span>
+    <span class="thread-pill"><span class="layer-dot dot-bridge"></span>His dad sees him as someone who makes people feel seen — does he recognise this?</span>
+    <span class="thread-pill"><span class="layer-dot dot-expanse"></span>What "putting it to good use" actually means to him</span>
+    <span class="thread-pill"><span class="layer-dot dot-return"></span>His dad's optimism — what is Howie himself optimistic about?</span>
+  </div>
+</div>
+
+<!-- THE CONVERSATION -->
+<div class="conversation">
+
+  <!-- LAYER 1: ORIGIN -->
+  <div class="layer-marker c-origin">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 1 — The Ground</span>
+    <span class="layer-marker-sub">Origin &amp; Formation</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-origin">
+    <div class="agent">
+      <div class="agent-question">What's your area like — Forest Hill?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">It's alright. Changed a lot though.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-origin">
+    <div class="agent-note">Short answer. Follow the thread he offered — "changed a lot" has energy. Don't push wider, pull this one.</div>
+    <div class="agent">
+      <div class="agent-question">Changed how?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">The cost of meal deals has gone up.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-origin">
+    <div class="agent-note">Deflection with humour. Don't fight it — he's funny and that's real. Stay in his register. Meet the joke, then plant a question underneath it.</div>
+    <div class="agent">
+      <div class="agent-question">That's genuinely tragic. Where do you get the best one?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Tesco. It's a three-quid Tesco meal deal area, not a Pret area. Not yet anyway. Give it two years.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-origin">
+    <div class="agent-note">He just told you something real without meaning to — he sees gentrification happening around him and has an opinion about it. He's watching his area change. The briefing says "systems thinker who loves social geography." This is it, live, already. Don't name it. Just follow.</div>
+    <div class="agent">
+      <div class="agent-question">Does that bother you — the two-years-until-Pret thing?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Bit. My mate's family had to move to Catford. And now there's a wine bar where the chicken shop was. Nobody asked for a wine bar.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 2: CALLING -->
+  <div class="layer-marker c-calling">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 2 — The Path</span>
+    <span class="layer-marker-sub">Calling &amp; Becoming</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-calling">
+    <div class="agent-note">He cares about this. The briefing says "systems thinker who loves social geography." Don't ask about school subjects. Ask about the thing he just showed you he cares about.</div>
+    <div class="agent">
+      <div class="agent-question">Do you think about that a lot — how areas change, who benefits, who gets pushed out?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Yeah. I do economics and geography and that helps but I was thinking about it before I had the words. Like why is Dulwich nice and Peckham wasn't? Same postcode basically. Just money and decisions.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-calling">
+    <div class="agent">
+      <div class="agent-question">Was there a person or a moment that made you start seeing it that way — like a system, not just how things are?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Geography teacher. Year 9. He actually asked what we thought and then properly listened. Most teachers don't actually listen.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 3: NAMING -->
+  <div class="layer-marker c-naming">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 3 — The Naming</span>
+    <span class="layer-marker-sub">Redefining Big Words</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-naming">
+    <div class="agent-note">"Most teachers don't actually listen" — that's a values statement disguised as a complaint. He cares about being heard. The briefing confirms this. Don't go abstract. Stay concrete but invite him to define something.</div>
+    <div class="agent">
+      <div class="agent-question">How can you tell when someone's actually listening versus just waiting to talk?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Follow-up questions. And they remember what you said last time. It's not complicated, people just don't bother.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-naming">
+    <div class="agent">
+      <div class="agent-question">Your dad mentioned the gym — the discipline. What does that word mean to you? People use it differently.<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Just doing the thing. Not thinking about whether you feel like it.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 4: EMBODIMENT -->
+  <div class="layer-marker c-embodiment">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 4 — The Body</span>
+    <span class="layer-marker-sub">Lived Experience &amp; the Daily</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-embodiment">
+    <div class="agent-note">Eleven words. That's his definition of discipline and it's better than most books on the subject. Ground it now. Make it physical.</div>
+    <div class="agent">
+      <div class="agent-question">What time's your alarm?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Quarter to six.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-embodiment">
+    <div class="agent">
+      <div class="agent-question">What's the walk there like at that time?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Dark. Quiet. It's the only time Forest Hill shuts up. Headphones in, nobody about. Feels like a head start.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-embodiment">
+    <div class="reflection">You told me about meal deals and now you're describing a walk in the dark at quarter to six that you love. There's more going on in your mornings than you let on.</div>
+    <div class="agent">
+      <div class="agent-question">What are you like on the days you don't go?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Worse. Less patient. I don't skip much though.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 5: FRACTURE -->
+  <div class="layer-marker c-fracture">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 5 — The Fracture</span>
+    <span class="layer-marker-sub">Challenge &amp; Transformation</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-fracture">
+    <div class="agent-note">The briefing says "takes responsibility for himself and others" and the fracture thread asks where that's cost him. He won't go there if asked directly. Come in sideways through something concrete he already mentioned.</div>
+    <div class="agent">
+      <div class="agent-question">You mentioned your mate whose family moved. Are you the person your friends come to when stuff goes wrong?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Yeah.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-fracture">
+    <div class="agent-note">One word. He's not going to elaborate unprompted. Don't ask how that feels. Ask something specific and short.</div>
+    <div class="agent">
+      <div class="agent-question">Has that ever been too much?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Once. Last year. Everyone was going through stuff at the same time and I was trying to sort everyone out and I just… ran out. Couldn't sleep. Angry for no reason. My dad clocked it. Said something about empty cups which is the most dad thing ever but he was right.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-fracture">
+    <div class="agent-note">That's the most he's said all conversation. He trusts this now. Don't over-react. Don't praise his vulnerability. Just stay with it.</div>
+    <div class="agent">
+      <div class="agent-question">Did anything change after that?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Got a bit better at no. Still bad at it. And the gym — I use it for my head now more than my body. When everything's loud in here [taps head] I go lift until it's quiet.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 6: BRIDGE -->
+  <div class="layer-marker c-bridge">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 6 — The Bridge</span>
+    <span class="layer-marker-sub">Unexpected Connections</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-bridge">
+    <div class="agent-note">He studies systems. He reads people. He's never been asked if those are the same thing.</div>
+    <div class="agent">
+      <div class="agent-question">You study how places and economies work — patterns, who gets what. And you also clock when a mate's not right before they say anything. Do you think those are the same skill?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Huh. Never thought about it. But yeah maybe. Pattern recognition innit. You look at an area and you can see what's going wrong. Same with people. Signs are there if you're paying attention. Most people just aren't.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-bridge">
+    <div class="reflection">You keep saying "most people don't bother" and "most people aren't paying attention." The thing you value most — in geography, in friendship, in everything — is people who actually look.</div>
+    <div class="agent">
+      <div class="agent-question">Your dad said people love being around you because you show genuine interest in them. Do you buy that?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Very dad. [pause] I dunno. I just like people. Everyone's got a thing if you bother to ask. Kid at school — everyone thinks he's boring — but he builds model railways and knows everything about the Victorian rail network. That's sick. Nobody else asked him.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 7: EXPANSE -->
+  <div class="layer-marker c-expanse">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 7 — The Expanse</span>
+    <span class="layer-marker-sub">The Animating Questions</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-expanse">
+    <div class="agent">
+      <div class="agent-question">You want to put the systems thinking to good use — that's from your dad but I think you'd say it too. What does good use actually look like?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">The places that get ignored. Make it so your postcode doesn't decide everything. I don't know the job title yet. Planning maybe. Policy. Something. But I want to be in the room where those decisions happen and I want to have actually talked to the people who live there. That's what's always missing.</div>
+    </div>
+  </div>
+
+  <!-- LAYER 8: RETURN -->
+  <div class="layer-marker c-return">
+    <div class="layer-marker-line"></div>
+    <span class="layer-marker-text">Layer 8 — The Return</span>
+    <span class="layer-marker-sub">Hope, Integration &amp; What Endures</span>
+    <div class="layer-marker-line"></div>
+  </div>
+
+  <div class="exchange c-return">
+    <div class="agent">
+      <div class="agent-question">Your dad said he's optimistic about the future because you're in it. What are you optimistic about?<span class="thread-indicator">from briefing</span></div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">My mates. People my age. Everyone says we don't care. We just don't care about the same stuff they did.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-return">
+    <div class="agent">
+      <div class="agent-question">What do you care about that they don't get?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">Fairness. Actual fairness, not the politician kind. We can see through all of it. And we talk to each other across the whole world now. I've got mates I've never met. Problems are big but the network's bigger. We'll sort it. Not by arguing online. By showing up.</div>
+    </div>
+  </div>
+
+  <div class="exchange c-return">
+    <div class="agent-note">He started with "it's alright" and "the cost of meal deals has gone up." Twenty questions later he's talking about fairness, showing up, and believing his generation will sort it. The spiral didn't extract this. It created the conditions for him to arrive here himself.</div>
+    <div class="reflection">You started this conversation with meal deals and you've ended it with a plan to walk into the room where decisions get made — and ask the question nobody else thought to ask. Because that's what you do. You notice. You show up. You ask the quiet kid about his railways.</div>
+    <div class="agent">
+      <div class="agent-question">What's something you'd want the people closest to you to properly get about you?</div>
+    </div>
+    <div class="user">
+      <div class="user-label">Howie</div>
+      <div class="user-text">That I'm winging it same as everyone else. Not as sorted as I look.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- THE REFLECTION -->
+<div style="max-width: 680px; margin: 0 auto; padding: 0 2rem;">
+  <div style="border-top: 1px solid rgba(139,92,246,0.15); margin-bottom: 3rem;"></div>
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div style="font-size: 0.65rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #a78bfa; margin-bottom: 0.8rem;">Reflection</div>
+    <div style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; font-style: italic; color: #e8e4df; line-height: 1.3;">The Quiet Kid's Railways</div>
+    <div style="font-size: 0.75rem; color: #4a4540; margin-top: 0.6rem;">After 1 conversation &middot; 20 exchanges</div>
+  </div>
+
+  <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 400; color: #bdb5ac; line-height: 2; letter-spacing: 0.01em;">
+
+    <p style="margin-bottom: 1.5rem;">
+      You lead with jokes and short answers. Meal deals and one-liners. You give people the fun version of yourself and it works — they love you for it, and it's not a mask, it's genuinely you. But it's not all of you. Underneath the laughter there's someone who wakes up at quarter to six and walks through the dark because he made a promise to himself, and who defines discipline in eleven words that most adults couldn't improve on: <em>just doing the thing, not thinking about whether you feel like it.</em>
+    </p>
+
+    <p style="margin-bottom: 1.5rem;">
+      You see systems everywhere. You saw gentrification before you had the word for it — a wine bar where the chicken shop was, a mate priced out to Catford, and a quiet fury about who gets listened to and who doesn't. You see the same patterns in people. You can tell when someone's not right the same way you can tell when a neighbourhood is about to tip. Pattern recognition, you called it. But it's more than that. It's a kind of moral attention — you notice because you think noticing matters. Most people don't bother. You keep saying that, and every time you say it, you're telling me what you believe in without quite saying it out loud.
+    </p>
+
+    <p style="margin-bottom: 1.5rem;">
+      There's a tension in you that I want to name carefully. You are the person everyone comes to — the one your friends call when things fall apart. You carry that with pride and it costs you more than you let on. You described running out last year like it surprised you, but I don't think it should have. You pour everything into the people around you and your only method for refilling is a dark gym at dawn. It works. But "got a bit better at no" is not the same as being good at it, and I think you know that.
+    </p>
+
+    <p style="margin-bottom: 1.5rem;">
+      Here is what I think ties it all together. You told me about a kid at school that everyone writes off as boring, and how you asked him one question and found out he knows everything about Victorian railways. You said "that's sick" and you meant it. That moment — the curiosity, the refusal to accept the surface, the delight in what you find underneath — is the same thing that makes you study economics, train at dawn, sit with a struggling mate in silence, and dream about being in the room where decisions get made about communities. You are, at your core, someone who believes that everything and everyone deserves a closer look. And you're usually right about what you find.
+    </p>
+
+    <p>
+      You told me you're winging it. Not as sorted as you look. Here's what I'd reflect back: the fact that you know that — at seventeen — is exactly why you're not winging it at all.
+    </p>
+
+  </div>
+</div>
+
+<!-- CLOSING -->
+<div class="closing-section">
+  <p>From meal deals to fairness.<br>
+  From four-word answers to the room where decisions get made.<br>
+  The spiral doesn't force the conversation open.<br>
+  It waits until the person is ready to walk there themselves.</p>
+</div>
+
+<!-- SCROLL ANIMATION -->
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -30px 0px'
+  });
+
+  document.querySelectorAll('.exchange').forEach(el => {
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>

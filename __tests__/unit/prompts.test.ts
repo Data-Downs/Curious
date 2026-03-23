@@ -9,11 +9,11 @@ describe("buildQuestionerPrompt", () => {
       recentMessages: [],
     });
 
-    expect(prompt).toContain("deeply curious presence");
+    expect(prompt).toContain("genuinely curious");
     expect(prompt).toContain("Nothing yet. This is a new relationship.");
     expect(prompt).toContain("very first interaction");
-    expect(prompt).toContain("Krista Tippett");
-    expect(prompt).toContain("Ram Dass");
+    expect(prompt).toContain("THE SPIRAL");
+    expect(prompt).toContain("ORIGIN");
   });
 
   it("includes understanding facets when provided", () => {

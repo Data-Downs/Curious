@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         .single(),
       supabase
         .from("curiosity_threads")
-        .select("thread")
+        .select("thread, layer")
         .eq("user_id", user.id)
         .eq("explored", false)
         .limit(5),
@@ -65,8 +65,10 @@ export async function POST(request: Request) {
 
   const conversationCount = profileResult.data?.total_conversations ?? 0;
 
-  // Gather unexplored curiosity threads
-  const curiosityThreads = (threadsResult.data ?? []).map((t) => t.thread);
+  // Gather unexplored curiosity threads with their spiral layer
+  const curiosityThreads = (threadsResult.data ?? []).map(
+    (t) => ({ thread: t.thread, layer: t.layer ?? "origin" })
+  );
 
   // Build conversation context
   const messages: { role: string; content: string }[] = recentMessages ?? [];
