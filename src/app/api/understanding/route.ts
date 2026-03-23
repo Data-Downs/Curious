@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL } from "@/lib/anthropic";
+import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildUnderstandingPrompt } from "@/lib/prompts/understanding";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
@@ -74,23 +74,11 @@ export async function POST(request: Request) {
     existingFacets: existingFacets ?? [],
   });
 
-  const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 2000,
+  const responseText = await callAnthropicRaw({
     system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content:
-          "Analyze this conversation and extract understanding. Respond with JSON only.",
-      },
-    ],
+    userContent: "Analyze this conversation and extract understanding. Respond with JSON only.",
+    maxTokens: 2000,
   });
-
-  // Parse the response
-  const responseText =
-    response.content[0].type === "text" ? response.content[0].text : "";
 
   let extraction;
   try {

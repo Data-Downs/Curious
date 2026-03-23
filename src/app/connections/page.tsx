@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
 import { ConnectionCard } from "@/components/connections/connection-card";
 
 interface ConnectionWithProfile {
@@ -21,56 +20,19 @@ export default function ConnectionsPage() {
     if (!user) return;
 
     async function fetchConnections() {
-      const supabase = createClient();
-
-      const { data: rawConnections } = await supabase
-        .from("connections")
-        .select(
-          "id, user_a_id, user_b_id, tier_a_to_b, tier_b_to_a, gift_id"
-        )
-        .or(`user_a_id.eq.${user!.id},user_b_id.eq.${user!.id}`);
-
-      if (!rawConnections || rawConnections.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // Fetch related profiles and gifts
-      const results: ConnectionWithProfile[] = [];
-
-      for (const conn of rawConnections) {
-        const isUserA = conn.user_a_id === user!.id;
-        const otherId = isUserA ? conn.user_b_id : conn.user_a_id;
-        const theirTierToMe = isUserA
-          ? conn.tier_b_to_a
-          : conn.tier_a_to_b;
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", otherId)
-          .single();
-
-        let relationshipLabel = "Connection";
-        if (conn.gift_id) {
-          const { data: gift } = await supabase
-            .from("agent_gifts")
-            .select("relationship_label")
-            .eq("id", conn.gift_id)
-            .single();
-          if (gift) relationshipLabel = gift.relationship_label;
+      try {
+        const res = await fetch("/api/connections");
+        if (!res.ok) {
+          setLoading(false);
+          return;
         }
-
-        results.push({
-          id: conn.id,
-          displayName: profile?.display_name || "Someone",
-          relationshipLabel,
-          tier: theirTierToMe,
-        });
+        const data = await res.json();
+        setConnections(data.connections ?? []);
+      } catch {
+        // Silently handle fetch errors
+      } finally {
+        setLoading(false);
       }
-
-      setConnections(results);
-      setLoading(false);
     }
 
     fetchConnections();

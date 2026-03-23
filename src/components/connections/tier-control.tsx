@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 interface TierControlProps {
   connectionId: string;
   currentTier: string;
-  /** Which tier field this controls (user's sharing tier) */
-  tierField: "tier_a_to_b" | "tier_b_to_a";
   onTierChanged: (newTier: string) => void;
 }
 
@@ -20,7 +18,6 @@ const TIERS = [
 export function TierControl({
   connectionId,
   currentTier,
-  tierField,
   onTierChanged,
 }: TierControlProps) {
   const [updating, setUpdating] = useState(false);
@@ -29,11 +26,13 @@ export function TierControl({
     if (newTier === currentTier || updating) return;
     setUpdating(true);
 
+    // Use server-side RPC function — prevents tier escalation
     const supabase = createClient();
     const { error } = await supabase
-      .from("connections")
-      .update({ [tierField]: newTier })
-      .eq("id", connectionId);
+      .rpc("update_my_tier", {
+        connection_id_param: connectionId,
+        new_tier: newTier,
+      });
 
     if (!error) {
       onTierChanged(newTier);

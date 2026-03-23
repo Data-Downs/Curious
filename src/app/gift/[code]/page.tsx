@@ -18,16 +18,14 @@ export default function GiftClaimPage() {
   useEffect(() => {
     async function fetchGift() {
       const supabase = createClient();
+      // Use RPC function — no direct table access to agent_gifts
       const { data } = await supabase
-        .from("agent_gifts")
-        .select("relationship_label, status")
-        .eq("invite_code", code)
-        .single();
+        .rpc("get_gift_preview", { invite_code_param: code });
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setNotFound(true);
       } else {
-        setGift(data);
+        setGift(data[0]);
       }
       setLoading(false);
     }

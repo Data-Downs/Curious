@@ -9,11 +9,10 @@ import { TierControl } from "@/components/connections/tier-control";
 
 interface ConnectionDetail {
   id: string;
-  otherName: string;
+  displayName: string;
   relationshipLabel: string;
   myTier: string;
   theirTier: string;
-  tierField: "tier_a_to_b" | "tier_b_to_a";
 }
 
 interface PastQuery {
@@ -36,57 +35,37 @@ export default function ConnectionDetailPage() {
     if (!user) return;
 
     async function fetchDetail() {
-      const supabase = createClient();
+      try {
+        // Fetch connection detail from API route (uses admin client for cross-user reads)
+        const res = await fetch(`/api/connections/${connectionId}`);
+        if (!res.ok) {
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        setDetail({
+          id: data.id,
+          displayName: data.displayName,
+          relationshipLabel: data.relationshipLabel,
+          myTier: data.myTier,
+          theirTier: data.theirTier,
+        });
 
-      const { data: conn } = await supabase
-        .from("connections")
-        .select("*")
-        .eq("id", connectionId)
-        .single();
+        // Past queries can be fetched directly — they belong to the current user
+        const supabase = createClient();
+        const { data: queries } = await supabase
+          .from("agent_queries")
+          .select("*")
+          .eq("connection_id", connectionId)
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-      if (!conn) {
+        setPastQueries(queries ?? []);
+      } catch {
+        // Silently handle fetch errors
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const isUserA = conn.user_a_id === user!.id;
-      const otherId = isUserA ? conn.user_b_id : conn.user_a_id;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", otherId)
-        .single();
-
-      let relationshipLabel = "Connection";
-      if (conn.gift_id) {
-        const { data: gift } = await supabase
-          .from("agent_gifts")
-          .select("relationship_label")
-          .eq("id", conn.gift_id)
-          .single();
-        if (gift) relationshipLabel = gift.relationship_label;
-      }
-
-      setDetail({
-        id: conn.id,
-        otherName: profile?.display_name || "Someone",
-        relationshipLabel,
-        myTier: isUserA ? conn.tier_a_to_b : conn.tier_b_to_a,
-        theirTier: isUserA ? conn.tier_b_to_a : conn.tier_a_to_b,
-        tierField: isUserA ? "tier_a_to_b" : "tier_b_to_a",
-      });
-
-      // Fetch past queries
-      const { data: queries } = await supabase
-        .from("agent_queries")
-        .select("*")
-        .eq("connection_id", connectionId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      setPastQueries(queries ?? []);
-      setLoading(false);
     }
 
     fetchDetail();
@@ -125,7 +104,7 @@ export default function ConnectionDetailPage() {
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
         <header className="text-center space-y-1">
           <h1 className="text-2xl font-serif text-curious-900">
-            {detail.otherName}
+            {detail.displayName}
           </h1>
           <p className="text-sm text-curious-500">{detail.relationshipLabel}</p>
         </header>
@@ -133,7 +112,6 @@ export default function ConnectionDetailPage() {
         <TierControl
           connectionId={detail.id}
           currentTier={detail.myTier}
-          tierField={detail.tierField}
           onTierChanged={(newTier) =>
             setDetail((d) => (d ? { ...d, myTier: newTier } : d))
           }

@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL } from "@/lib/anthropic";
+import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildBridgePrompt } from "@/lib/prompts/bridge";
 import { filterFacetsByTier } from "@/lib/tier-filter";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -87,20 +87,16 @@ export async function POST(request: Request) {
     filteredFacets,
   });
 
-  const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1000,
+  const responseText = await callAnthropicRaw({
     system: systemPrompt,
-    messages: [{ role: "user", content: query }],
+    userContent: query,
+    maxTokens: 1000,
   });
 
-  const responseText =
-    response.content[0].type === "text" ? response.content[0].text : "";
-
-  // Log the query
+  // Log the query — querier_id ensures only the asker can see it
   await supabase.from("agent_queries").insert({
     connection_id: connectionId,
+    querier_id: user.id,
     query_text: query,
     response_text: responseText,
     tier,

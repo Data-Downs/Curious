@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL } from "@/lib/anthropic";
+import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildReflectorPrompt } from "@/lib/prompts/reflector";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
@@ -80,21 +80,11 @@ export async function POST(request: Request) {
     previousReflections: previousReflections ?? [],
   });
 
-  const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1500,
+  const responseText = await callAnthropicRaw({
     system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: "Reflect back what you understand about this person. Respond with JSON only.",
-      },
-    ],
+    userContent: "Reflect back what you understand about this person. Respond with JSON only.",
+    maxTokens: 1500,
   });
-
-  const responseText =
-    response.content[0].type === "text" ? response.content[0].text : "";
 
   let reflection;
   try {

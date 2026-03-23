@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL } from "@/lib/anthropic";
+import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildSeederPrompt } from "@/lib/prompts/seeder";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
@@ -75,32 +75,21 @@ export async function POST(request: Request) {
   });
 
   // Generate curiosity threads from briefing
-  const systemPrompt = buildSeederPrompt({
-    briefing: gift.briefing,
-    relationshipLabel: gift.relationship_label,
-  });
-
-  const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1500,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: "Generate curiosity threads from this briefing. Respond with JSON only.",
-      },
-    ],
-  });
-
-  const responseText =
-    response.content[0].type === "text" ? response.content[0].text : "";
-
   try {
+    const systemPrompt = buildSeederPrompt({
+      briefing: gift.briefing,
+      relationshipLabel: gift.relationship_label,
+    });
+
+    const responseText = await callAnthropicRaw({
+      system: systemPrompt,
+      userContent: "Generate curiosity threads from this briefing. Respond with JSON only.",
+      maxTokens: 1500,
+    });
+
     const jsonStr = responseText.replace(/```json\n?|\n?```/g, "").trim();
     const seederResult = seederResponseSchema.parse(JSON.parse(jsonStr));
 
-    // Insert curiosity threads for the recipient
     for (const thread of seederResult.threads) {
       await supabase.from("curiosity_threads").insert({
         user_id: user.id,
@@ -111,7 +100,7 @@ export async function POST(request: Request) {
       });
     }
   } catch (err) {
-    console.error("[seeder parse error]", err);
+    console.error("[seeder error]", err);
     // Gift is still claimed even if thread generation fails
   }
 

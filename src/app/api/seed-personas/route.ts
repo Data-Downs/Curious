@@ -10,6 +10,10 @@ import {
 // POST /api/seed-personas — Seed all test persona data into Supabase
 // Uses service role client to bypass RLS
 export async function POST() {
+  if (process.env.NODE_ENV === "production") {
+    return Response.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = getAdminClient() as any;
@@ -189,6 +193,10 @@ export async function POST() {
 
 // GET /api/seed-personas — Fetch all test persona data for the dashboard
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return Response.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = getAdminClient() as any;
