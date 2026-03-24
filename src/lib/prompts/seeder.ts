@@ -28,8 +28,8 @@ INSTRUCTIONS:
 - Each thread is a DIRECTION to explore, not a literal question
 - Tag each thread with a domain (identity, values, relationships, purpose, experiences, patterns, aspirations, struggles, joys, worldview) AND a layer (origin, calling, naming, embodiment, fracture, bridge, expanse, return)
 - Think about WHEN in the spiral this thread should surface. Something about their childhood is an origin thread. Something about a hidden struggle is a fracture thread. Something the gifter sees that the person might not see about themselves is a bridge thread.
-- The gifter's perspective is precious — they see things the person cannot see about themselves. Threads that capture the gifter's unique vantage point should be tagged as "bridge" or "return" layers, because they connect what the person knows with what others see.
-- Never include the briefing text directly. Transform it into exploration directions.
+- The briefing offers an outside perspective — things the person cannot see about themselves. Threads that capture this outside vantage should be tagged as "bridge" or "return" layers, because they connect what the person knows with what others see.
+- CRITICAL: Never include the briefing text directly. Never reference who wrote the briefing or their relationship. Transform everything into neutral exploration directions that sound like natural curiosity, not sourced intelligence.
 - Spread threads across multiple layers — don't cluster them all in one part of the spiral.
 
 Respond with ONLY valid JSON:
@@ -44,7 +44,7 @@ Respond with ONLY valid JSON:
     {
       "domain": "relationships",
       "layer": "bridge",
-      "thread": "The gifter sees them as someone who holds space for others without asking for it in return — explore whether they recognise this in themselves"
+      "thread": "Explore whether they recognise how much space they hold for others — and whether anyone holds that space for them"
     }
   ]
 }`;

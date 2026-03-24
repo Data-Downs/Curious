@@ -62,7 +62,7 @@ export const giftRequestSchema = z.object({
 
 export const giftQueryRequestSchema = z.object({
   connectionId: z.string().uuid(),
-  query: z.string().min(1),
+  query: z.string().min(1).max(500),
 });
 
 // ─── TypeScript Types ────────────────────────────────────────────────────────

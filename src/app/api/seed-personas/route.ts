@@ -9,8 +9,9 @@ import {
 
 // POST /api/seed-personas — Seed all test persona data into Supabase
 // Uses service role client to bypass RLS
+// SECURITY: Requires ALLOW_DEV_ENDPOINTS=true (never set in production)
 export async function POST() {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.ALLOW_DEV_ENDPOINTS !== "true") {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -193,7 +194,7 @@ export async function POST() {
 
 // GET /api/seed-personas — Fetch all test persona data for the dashboard
 export async function GET() {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.ALLOW_DEV_ENDPOINTS !== "true") {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 

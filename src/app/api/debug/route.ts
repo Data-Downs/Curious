@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.ALLOW_DEV_ENDPOINTS !== "true") {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -27,7 +27,7 @@ export async function GET() {
     envDiag.cfContextKeys = Object.keys(env ?? {});
     envDiag.cfKeyType = typeof env?.ANTHROPIC_API_KEY;
     envDiag.cfKeyConstructor = env?.ANTHROPIC_API_KEY?.constructor?.name;
-    envDiag.cfKeyStringified = env?.ANTHROPIC_API_KEY ? String(env.ANTHROPIC_API_KEY).slice(0, 10) + "..." : "EMPTY";
+    envDiag.cfKeyStringified = env?.ANTHROPIC_API_KEY ? "SET (redacted)" : "EMPTY";
     envDiag.cfHasKey = !!(env?.ANTHROPIC_API_KEY);
   } catch (e) {
     envDiag.cfContextError = String(e);

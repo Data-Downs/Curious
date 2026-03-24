@@ -1,5 +1,6 @@
 import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildUnderstandingPrompt } from "@/lib/prompts/understanding";
+import { validateFacetPrivacy } from "@/lib/quote-detection";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -97,10 +98,25 @@ export async function POST(request: Request) {
     );
   }
 
-  // Apply facet changes
+  // Extract user messages for quote detection
+  const userMessages = messages
+    .filter((m) => m.role === "user")
+    .map((m) => m.content);
+
+  // Apply facet changes with privacy validation
   const facetErrors: string[] = [];
+  let facetsSkipped = 0;
+
   for (const facet of extraction.facets) {
     if (facet.action === "new") {
+      // Privacy check: reject facets containing raw quotes
+      const privacyIssue = validateFacetPrivacy(facet.content, userMessages);
+      if (privacyIssue) {
+        console.warn("[understanding] facet rejected:", privacyIssue, "Content:", facet.content.slice(0, 100));
+        facetsSkipped++;
+        continue;
+      }
+
       const { error } = await supabase.from("understanding_facets").insert({
         user_id: user.id,
         domain: facet.domain,
@@ -114,6 +130,14 @@ export async function POST(request: Request) {
         facetErrors.push(`insert: ${error.message}`);
       }
     } else if (facet.action === "update") {
+      // Privacy check on updates too
+      const privacyIssue = validateFacetPrivacy(facet.content, userMessages);
+      if (privacyIssue) {
+        console.warn("[understanding] facet update rejected:", privacyIssue, "Content:", facet.content.slice(0, 100));
+        facetsSkipped++;
+        continue;
+      }
+
       const { error } = await supabase
         .from("understanding_facets")
         .update({
@@ -206,6 +230,7 @@ export async function POST(request: Request) {
   return Response.json({
     success: true,
     facetsProcessed: extraction.facets.length,
+    facetsSkippedForPrivacy: facetsSkipped,
     sessionSummary: extraction.session_summary,
     themes: extraction.themes,
   });

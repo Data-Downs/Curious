@@ -21,7 +21,34 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { connectionId, query } = parsed.data;
+  const { connectionId } = parsed.data;
+
+  // Sanitise query: strip XML/HTML tags and control characters
+  // to prevent prompt injection via structured markup
+  const query = parsed.data.query
+    .replace(/<[^>]*>/g, "")
+    .replace(/[\x00-\x1f]/g, "")
+    .trim();
+
+  if (!query) {
+    return Response.json({ error: "Invalid query" }, { status: 400 });
+  }
+
+  // Rate limiting: max 10 bridge queries per connection per day
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: recentQueryCount } = await supabase
+    .from("agent_queries")
+    .select("id", { count: "exact", head: true })
+    .eq("connection_id", connectionId)
+    .eq("querier_id", user.id)
+    .gte("created_at", oneDayAgo);
+
+  if ((recentQueryCount ?? 0) >= 10) {
+    return Response.json(
+      { error: "Rate limit exceeded. Maximum 10 queries per connection per day." },
+      { status: 429 }
+    );
+  }
 
   // Fetch connection and verify access
   const { data: connection } = await supabase
@@ -53,7 +80,7 @@ export async function POST(request: Request) {
   const admin = getAdminClient();
   const { data: subjectFacets } = await admin
     .from("understanding_facets")
-    .select("*")
+    .select("id, domain, content, confidence, depth, is_active, created_at")
     .eq("user_id", subjectId)
     .eq("is_active", true) as { data: UnderstandingFacet[] | null };
 

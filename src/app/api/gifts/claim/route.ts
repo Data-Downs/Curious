@@ -1,6 +1,7 @@
 import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildSeederPrompt } from "@/lib/prompts/seeder";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const claimSchema = z.object({
@@ -33,13 +34,16 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  // Find the gift
-  const { data: gift } = await supabase
+  // Use admin client — the claimer has no direct SELECT access to
+  // agent_gifts (they are neither the gifter nor recipient yet)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any;
+  const { data: gift } = await admin
     .from("agent_gifts")
-    .select("*")
+    .select("id, gifter_id, recipient_email, relationship_label, status, briefing")
     .eq("invite_code", parsed.data.inviteCode)
     .eq("status", "pending")
-    .single();
+    .single() as { data: { id: string; gifter_id: string; recipient_email: string; relationship_label: string; status: string; briefing: string } | null };
 
   if (!gift) {
     return Response.json(
@@ -56,8 +60,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Update gift status
-  await supabase
+  // Update gift status via admin client (claimer doesn't have UPDATE access)
+  await (admin as any)
     .from("agent_gifts")
     .update({
       recipient_id: user.id,
@@ -66,7 +70,7 @@ export async function POST(request: Request) {
     })
     .eq("id", gift.id);
 
-  // Create connection
+  // Create connection (claimer is user_b, which matches RLS policy)
   await supabase.from("connections").insert({
     gift_id: gift.id,
     user_a_id: gift.gifter_id,

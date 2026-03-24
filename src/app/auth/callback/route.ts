@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { callAnthropicRaw } from "@/lib/anthropic";
 import { buildSeederPrompt } from "@/lib/prompts/seeder";
 import { z } from "zod";
@@ -8,6 +9,7 @@ const seederResponseSchema = z.object({
   threads: z.array(
     z.object({
       domain: z.string(),
+      layer: z.string().default("origin"),
       thread: z.string(),
     })
   ),
@@ -62,17 +64,20 @@ async function claimGift(
   userId: string,
   inviteCode: string
 ) {
-  const { data: gift } = await supabase
+  // Use admin client — the claimer has no SELECT access to pending gifts
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getAdminClient() as any;
+  const { data: gift } = await admin
     .from("agent_gifts")
-    .select("*")
+    .select("id, gifter_id, recipient_email, relationship_label, status, briefing")
     .eq("invite_code", inviteCode)
     .eq("status", "pending")
-    .single();
+    .single() as { data: { id: string; gifter_id: string; recipient_email: string; relationship_label: string; status: string; briefing: string } | null };
 
   if (!gift || gift.gifter_id === userId) return;
 
-  // Update gift status
-  await supabase
+  // Update gift status via admin client
+  await admin
     .from("agent_gifts")
     .update({
       recipient_id: userId,
@@ -111,6 +116,7 @@ async function claimGift(
       await supabase.from("curiosity_threads").insert({
         user_id: userId,
         domain: thread.domain,
+        layer: thread.layer,
         thread: thread.thread,
         explored: false,
         source_gift_id: gift.id,

@@ -2,6 +2,7 @@ import { MODEL, getAnthropicApiKey } from "@/lib/anthropic";
 import { buildQuestionerPrompt } from "@/lib/prompts/questioner";
 import { conversationRequestSchema } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { suggestExplorationPriority } from "@/lib/domain-coverage";
 
 export async function POST(request: Request) {
@@ -45,12 +46,14 @@ export async function POST(request: Request) {
         .select("total_conversations")
         .eq("id", user.id)
         .single(),
-      supabase
+      // Use admin client — threads are not readable by the user via RLS
+      // to prevent them seeing the gifter's transformed briefing content
+      (getAdminClient() as any)
         .from("curiosity_threads")
         .select("thread, layer")
         .eq("user_id", user.id)
         .eq("explored", false)
-        .limit(5),
+        .limit(5) as Promise<{ data: { thread: string; layer: string }[] | null }>,
     ]);
 
   const facets = facetsResult.data ?? [];
